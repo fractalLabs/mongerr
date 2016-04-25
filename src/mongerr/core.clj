@@ -1,16 +1,20 @@
 (ns mongerr.core
   "Conección a BD"
   (:require [clj-time.core :as t]
+            [com.rpl.specter :refer :all]
+            [compojure.core :refer :all]
             [environ.core :refer [env]]
             [monger.collection :as mc]
             [monger.command :as cmd]
             [monger.core :as mg]
             [monger.db :refer [get-collection-names]]
             monger.joda-time
+            monger.json
             [monger.operators :refer :all]
             [nillib.tipo :refer :all]
             [nillib.worm :refer :all]))
 
+;; Connection
 (defn mongo-url
   ^{:private true}
   []
@@ -42,16 +46,40 @@
   (sort (filter valid-collection?
           (get-collection-names *db*))))
 
+;; Crud
+
 (defn db-find
   "Fetch items from collection"
   ([] (collections))
-  ([collection] (db-find collection {}))
+  ([collection]
+   (println "**Collection: " collection ", (all)")
+   (db-find collection {}))
   ([collection where]
-    (println "**Collection: " collection)
+    (println "**Collection: " collection ", where: " where)
     (remove-ids (mc/find-maps *db* collection where)))
   ([collection where fields]
-    (println "**Collection: " collection)
+   (println "**Collection: " collection ", where: " where)
     (remove-ids (mc/find-maps *db* collection where fields))))
+
+(defn db
+  "Same as db-find
+  This exists because find is the most common operation"
+  [& args]
+  (apply db-find args))
+
+(defn db-insert
+  ":ordered false: si falla al insertar uno, inserta los demas
+  http://docs.mongodb.org/manual/reference/command/insert/#dbcmd.insert"
+  [collection o]
+  (if (map? o)
+    (with-meta o {:db (first (:db (meta (db-insert collection [o]))))})
+    (let [subcolls (partition-all 500 o)
+          data (doall(map (fn [c] (mg/command *db*
+                                              (array-map :insert collection
+                                                         :documents (map #(assoc % :date_insert (java.util.Date.)) c)
+                                                         :ordered false)))
+                          subcolls))]
+      (with-meta o {:db data}))))
 
 (defn db-findf
   "Find first result, use like db-find"
@@ -63,57 +91,49 @@
   [coll query]
   (db-find coll {$text {$search query}}))
 
+(defn extract-coords [m] ;TODO this smells
+  (let [v (filter number? (map read-string (vals m)))]
+    [(first (filter neg? v))
+     (first (filter pos? v))]))
+
+(defn db-geo
+  "Geographic db-find"
+  ([collection coords radius]
+                                        ;(remove-ids
+   (db-find collection {:coords {:$near {:$geometry {:type "Point" :coordinates coords}
+                                         :$maxDistance radius}}}));)
+  ([collection coords]
+   (db-geo collection coords 200)))
+
 (defn db-update
   "Update data in collection"
-  [coll conditions document]
+  [collection conditions document]
   (if-not (or (empty? conditions) (empty? document))
-    (mc/update *db* coll conditions {$set document} {:return-new true :upsert true :multi true})))
+    (mc/update *db* collection conditions {$set document} {:return-new true :upsert true :multi true})))
 
 (defn db-update-all
   "Update data to all elements of collection"
-  [coll document]
-  (mc/update *db* coll {} {$set document} {:return-new true :upsert true :multi true}))
+  [collection document]
+  (mc/update *db* collection {} {$set document} {:return-new true :upsert true :multi true}))
 
 (defn db-upsert
   "Upsert data in collection"
-  [coll conditions document]
-  (mc/upsert *db* coll conditions {$set document}))
+  [collection conditions document]
+  (mc/upsert *db* collection conditions {$set document}))
 
 (defn db-remove
   "Remove data in collection"
-  [coleccion match]
+  [collection match]
   {:pre [(not-empty match)]}
-  (mc/remove *db* coleccion match))
+  (mc/remove *db* collection match))
 
 (defn db-delete
   "Delete all contents in a collection"
-  [coll]
-  (mc/remove *db* coll {}))
+  [collection]
+  (mc/remove *db* collection {}))
 
-(defn db-insert
-  ":ordered false: si falla al insertar uno, inserta los demas
-  http://docs.mongodb.org/manual/reference/command/insert/#dbcmd.insert"
-  [collection o]
-  (if (map? o)
-     (with-meta o {:db (first (:db (meta (db-insert collection [o]))))})
-    (let [subcolls (partition-all 500 o)
-          data (doall(map (fn [c] (mg/command *db*
-                             (array-map :insert collection
-                                        :documents (map #(assoc % :date_insert (java.util.Date.)) c)
-                                        :ordered false)))
-                    subcolls))]
-      (with-meta o {:db data}))))
 
-(defn db
-  "Same as db-find
-  This exists because find is the most common operation"
-  [& args]
-  (apply db-find args))
-
-(defn db-take-1
-  "Take one element in collection"
-  [coleccion where]
-  (mc/find-one-as-map *db* coleccion where))
+;; Stats
 
 (defn db-stats
   "Get db-stats"
@@ -124,19 +144,7 @@
   ([] (map coll-stats (collections)))
   ([coll] (cmd/collection-stats *db* coll)))
 
-(defn extract-coords [m] ;TODO this smells
-  (let [v (filter number? (map read-string (vals m)))]
-    [(first (filter neg? v))
-     (first (filter pos? v))]))
-
-(defn db-geo
-  "Geographic db-find"
-  ([collection coords radius]
-    ;(remove-ids
-      (db-find collection {:coords {:$near {:$geometry {:type "Point" :coordinates coords}
-                                            :$maxDistance radius}}}));)
-  ([collection coords]
-   (db-geo collection coords 200)))
+;; Serialization
 
 (defn serializable?
   "Is this object serializable?"[v]
@@ -157,8 +165,15 @@
                    (java.io.ByteArrayInputStream. bytes))]
     (.readObject dis)))
 
-;; TODO this should be somewhere lse
+;;
 
+(def crud-routes
+  "Add this routes to your app handler for the crud rest api"
+  [(GET "/db/:collection" [& collection]
+        (db-find collection))
+   ()])
+
+;; TODO this should be somewhere lse
 (defn collection-metadata
   "Get metadata from fields in a collection.
   WARNING use only on small collections"  ;TODO choose subset when too big

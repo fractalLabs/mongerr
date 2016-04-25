@@ -8,5 +8,6 @@
                  [compojure "1.5.0"]    ;for predefined routes
                  [environ "1.0.2"]      ;for env variables
                  [com.novemberain/monger "3.0.2"]
-                 [nillib "0.1.0-SNAPSHOT"]]
+                 [nillib "0.1.0-SNAPSHOT"]
+                 [com.rpl/specter "0.9.3"]]
   :repl-options {:init-ns mongerr.core})
