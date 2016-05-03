@@ -52,7 +52,6 @@
   "Fetch items from collection"
   ([] (collections))
   ([collection]
-   (println "**Collection: " collection ", (all)")
    (db-find collection {}))
   ([collection where]
     (println "**Collection: " collection ", where: " where)
