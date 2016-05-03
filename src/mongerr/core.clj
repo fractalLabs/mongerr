@@ -15,11 +15,12 @@
             [nillib.worm :refer :all]))
 
 ;; Connection
+(def local-mongo-url "mongodb://localhost/admin")
 (defn mongo-url
   ^{:private true}
   []
   (or (env :mongo-url)
-      "mongodb://localhost/admin"))
+      local-mongo-url))
 (def ^{:private true :dynamic true}
   *conn-db* (mg/connect-via-uri (mongo-url)))
 (def ^{:private true :dynamic true} *db* (:db *conn-db*))
