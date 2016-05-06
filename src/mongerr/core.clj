@@ -83,8 +83,10 @@
 
 (defn db-findf
   "Find first result, use like db-find"
-  [collection where]
-  (mc/find-one-as-map *db* collection where))
+  ([collection]
+   (db-findf collection {}))
+  ([collection where]
+   (mc/find-one-as-map *db* collection where)))
 
 (defn db-text-search
   "Search a collection in full text"
