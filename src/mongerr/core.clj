@@ -134,6 +134,10 @@
   [collection]
   (mc/remove *db* collection {}))
 
+(defn db-drop
+  "Delete collection from database"
+  [collection]
+  (mc/drop *db* collection))
 
 ;; Stats
 
