@@ -10,9 +10,7 @@
             [monger.db :refer [get-collection-names]]
             monger.joda-time
             monger.json
-            [monger.operators :refer :all]
-            [nillib.tipo :refer :all]
-            [nillib.worm :refer :all]))
+            [monger.operators :refer :all]))
 
 ;; Connection
 (def local-mongo-url "mongodb://localhost/admin")
@@ -178,26 +176,3 @@
   [(GET "/db/:collection" [& collection]
         (db-find collection))
    ()])
-
-;; TODO this should be somewhere lse
-(defn collection-metadata
-  "Get metadata from fields in a collection.
-  WARNING use only on small collections"  ;TODO choose subset when too big
-  [collection]
-  (let [data (digitalize (db-find collection))
-        ks (distinct (mapcat keys data))
-        t-y-st (tipo-y-subtipo data)]
-    (assoc (zipmap ks (map #(metadata (map % data)) ks))
-           :collection collection
-           :count (count data))))
-
-(defn save-collection-metadata
-  [collection]
-  (db-upsert :metadata
-             {:collection collection}
-             (collection-metadata collection)))
-
-(defn collections-metadata
-  "Update collections-metadata on all collections"
-  []
-  (pmap save-collection-metadata (db-find)))
