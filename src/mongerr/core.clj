@@ -1,7 +1,6 @@
 (ns mongerr.core
   "Conección a BD"
   (:require [clj-time.core :as t]
-            [com.rpl.specter :refer :all]
             [compojure.core :refer :all]
             [environ.core :refer [env]]
             [monger.collection :as mc]
