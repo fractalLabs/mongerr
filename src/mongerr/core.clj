@@ -5,11 +5,13 @@
             [environ.core :refer [env]]
             [monger.collection :as mc]
             [monger.command :as cmd]
+            [monger.conversion :refer [from-db-object]]
             [monger.core :as mg]
             [monger.db :refer [get-collection-names]]
             monger.joda-time
             monger.json
-            [monger.operators :refer :all]))
+            [monger.operators :refer :all])
+  (:import [com.mongodb Bytes]))
 
 ;; Connection
 (def local-mongo-url "mongodb://localhost/admin")
@@ -53,7 +55,9 @@
    (db-find collection {}))
   ([collection where]
     (println "**Collection: " collection ", where: " where)
-    (remove-ids (mc/find-maps *db* collection where)))
+   (remove-ids (let [db-cur (mc/find *db* collection where)]
+                 (.setOptions db-cur Bytes/QUERYOPTION_NOTIMEOUT)
+                 (map #(from-db-object %1 true) db-cur))))
   ([collection where fields]
    (println "**Collection: " collection ", where: " where)
     (remove-ids (mc/find-maps *db* collection where fields))))
