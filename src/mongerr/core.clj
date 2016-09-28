@@ -15,14 +15,17 @@
 
 ;; Connection
 (def local-mongo-url "mongodb://localhost/admin")
+
 (defn mongo-url
   ^{:private true}
   []
   (or (env :mongo-url)
       local-mongo-url))
-(def ^{:private true :dynamic true}
+
+(def ^{:dynamic true}
   *conn-db* (mg/connect-via-uri (mongo-url)))
-(def ^{:private true :dynamic true} *db* (:db *conn-db*))
+
+(def ^{:dynamic true} *db* (:db *conn-db*))
 
 (defn remove-ids
   "Remove :_id from mongo objects, because we yet don't handle them as json"
