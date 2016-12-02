@@ -115,7 +115,11 @@
   "Update data in collection"
   [collection conditions document]
   (if-not (or (empty? conditions) (empty? document))
-    (mc/update *db* collection conditions {$set document} {:return-new true :upsert true :multi true})))
+    (mc/update *db*
+               collection
+               conditions
+               {$set (assoc document :date-update (t/now))}
+               {:return-new true :upsert true :multi true})))
 
 (defn db-update-all
   "Update data to all elements of collection"
