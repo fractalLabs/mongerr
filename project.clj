@@ -7,5 +7,6 @@
                  [org.clojure/clojure "1.8.0"]
                  [compojure "1.5.1"]    ;for predefined routes
                  [environ "1.1.0"]      ;for env variables
-                 [com.novemberain/monger "3.1.0"]]
+                 [com.novemberain/monger "3.1.0"]
+                 [medley "0.8.3"]]
   :repl-options {:init-ns mongerr.core})
