@@ -77,7 +77,7 @@
   [collection o]
   (if (map? o)
     (with-meta o {:db (first (:db (meta (db-insert collection [o]))))})
-    (let [subcolls (partition-all 500 o)
+    (let [subcolls (partition-all 100 o)
           data (doall(map (fn [c] (mg/command *db*
                                               (array-map :insert collection
                                                          :documents (map #(assoc % :date_insert (java.util.Date.)) c)
