@@ -78,12 +78,14 @@
   (if (map? o)
     (with-meta o {:db (first (:db (meta (db-insert collection [o]))))})
     (let [subcolls (partition-all 100 o)
-          data (doall(map (fn [c] (mg/command *db*
+          data (doall (map (fn [c] (mg/command *db*
                                               (array-map :insert collection
-                                                         :documents (map #(assoc % :date_insert (java.util.Date.)) c)
+                                                         :documents (map #(assoc % :date-insert (java.util.Date.)) c)
                                                          :ordered false)))
                           subcolls))]
-      (with-meta o {:db data}))))
+      (println "inserted on " collection ", " data)
+      data ;(with-meta o {:db data})
+      )))
 
 (defn db-findf
   "Find first result, use like db-find"
