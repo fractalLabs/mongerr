@@ -30,7 +30,7 @@
 (defn remove-ids
   "Remove :_id from mongo objects, because we yet don't handle them as json"
   [coll] ;WISH convert to proper date object
-  (map #(dissoc (assoc % :created_at (.getTimestamp (:_id %))) :_id) coll))
+  (map #(dissoc % :_id) coll))
 
 (def blacklisted-collections
   "This are the collection names that wont be listed"
@@ -76,8 +76,8 @@
   http://docs.mongodb.org/manual/reference/command/insert/#dbcmd.insert"
   [collection o]
   (if (map? o)
-    (with-meta o {:db (first (:db (meta (db-insert collection [o]))))})
-    (let [subcolls (partition-all 100 o)
+    (db-insert collection [o])
+    (let [subcolls (partition-all 100 (remove-ids o))
           data (doall (map (fn [c] (mg/command *db*
                                               (array-map :insert collection
                                                          :documents (map #(assoc % :date-insert (java.util.Date.)) c)
