@@ -8,7 +8,7 @@
 
 (deftest test-insert-doc
   (testing "can insert and find stuff"
-    (is (= {:a 1} (db-insert :mongerr-tests {:a 1})))
+    (is (== 1 (get (first (db-insert :mongerr-tests {:a 1})) "ok")))
     (is (= {:a 1} (select-keys (db-findf :mongerr-tests {:a 1}) [:a])))))
 
 (deftest test-delete-doc
