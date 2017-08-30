@@ -2,6 +2,7 @@
   "Conección a BD"
   (:require [clj-time.core :as t]
             [compojure.core :refer :all]
+            [comun.core :refer :all]
             [environ.core :refer [env]]
             [monger.collection :as mc]
             [monger.command :as cmd]
@@ -57,12 +58,12 @@
   ([collection]
    (db-find collection {}))
   ([collection where]
-    (println "**Collection: " collection ", where: " where)
+    (printerr "**Collection: " collection ", where: " where)
    (remove-ids (let [db-cur (mc/find *db* collection where)]
                  (.setOptions db-cur Bytes/QUERYOPTION_NOTIMEOUT)
                  (map #(from-db-object %1 true) db-cur))))
   ([collection where fields]
-   (println "**Collection: " collection ", where: " where)
+   (printerr "**Collection: " collection ", where: " where)
     (remove-ids (mc/find-maps *db* collection where fields))))
 
 (defn db
@@ -83,7 +84,7 @@
                                                          :documents (map #(assoc % :date-insert (java.util.Date.)) c)
                                                          :ordered false)))
                           subcolls))]
-      (println "inserted on " collection ", " data)
+      (printerr "inserted on " collection ", " data)
       data ;(with-meta o {:db data})
       )))
 
