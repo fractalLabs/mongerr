@@ -150,6 +150,7 @@
   [collection]
   (mc/drop *db* collection))
 
+
 ;; Stats
 
 (defn db-stats
@@ -160,6 +161,14 @@
   "Get stats from collections"
   ([] (map coll-stats (collections)))
   ([coll] (cmd/collection-stats *db* coll)))
+
+(defn db-count
+  "Count documents in collection"
+  ([coll]
+   (db-count coll nil))
+  ([coll conditions]
+   (mc/count *db* coll conditions)))
+
 
 ;; Serialization
 
