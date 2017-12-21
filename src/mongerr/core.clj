@@ -4,6 +4,8 @@
             [compojure.core :refer :all]
             [comun.core :refer :all]
             [environ.core :refer [env]]
+            [digitalize.core :refer :all]
+            [formaterr.core :refer :all]
             [monger.collection :as mc]
             [monger.command :as cmd]
             [monger.conversion :refer [from-db-object]]
