@@ -5,7 +5,6 @@
             [comun.core :refer :all]
             [environ.core :refer [env]]
             [digitalize.core :refer :all]
-            [formaterr.core :refer :all]
             [monger.collection :as mc]
             [monger.command :as cmd]
             [monger.conversion :refer [from-db-object]]
@@ -154,7 +153,7 @@
 
 (defn data-snapshot
   [coll f]
-  (let [data (doall (remove-nils (if (fn? f) (f) f)))]
+  (let [data (doall (digitalize (if (fn? f) (f) f)))]
     (when (seq data)
       (db-delete coll)
       (db-insert coll data))))
