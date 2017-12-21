@@ -150,6 +150,12 @@
   [collection]
   (mc/drop *db* collection))
 
+(defn data-snapshot
+  [coll f]
+  (let [data (doall (remove-nils (if (fn? f) (f) f)))]
+    (when (seq data)
+      (db-delete coll)
+      (db-insert coll data))))
 
 ;; Stats
 
