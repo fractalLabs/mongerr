@@ -73,6 +73,15 @@
   [& args]
   (apply db-find args))
 
+(defn db-insert- [collection elements]
+  (try
+    (mg/command *db*
+                (array-map :insert collection
+                           :documents (map #(assoc % :date-insert (java.util.Date.)) elements)
+                           :ordered false))
+    (catch Exception e (if (seq? elements) (doall (map #(db-insert- collection %)
+                                                      elements))))))
+
 (defn db-insert
   ":ordered false: si falla al insertar uno, inserta los demas
   http://docs.mongodb.org/manual/reference/command/insert/#dbcmd.insert"
@@ -80,14 +89,10 @@
   (if (map? o)
     (db-insert collection [o])
     (let [subcolls (partition-all 100 (remove-ids o))
-          data (doall (map (fn [c] (mg/command *db*
-                                              (array-map :insert collection
-                                                         :documents (map #(assoc % :date-insert (java.util.Date.)) c)
-                                                         :ordered false)))
-                          subcolls))]
+          data (doall (map #(db-insert- collection %)
+                           subcolls))]
       (printerr "inserted on " collection ", " data)
-      data ;(with-meta o {:db data})
-      )))
+      data)))
 
 (defn db-findf
   "Find first result, use like db-find"
