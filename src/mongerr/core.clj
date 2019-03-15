@@ -156,12 +156,20 @@
   [collection]
   (mc/drop *db* collection))
 
+(defn db-rename
+  [old-collection new-collection]
+  (mc/rename *db* old-collection new-collection))
+
+(defn coll-tmp [coll] (str (name coll) "-tmp"))
+
 (defn data-snapshot
   [coll f]
-  (let [data (doall (digitalize (if (fn? f) (f) f)))]
+  (let [data (doall (remove-nils (if (fn? f) (f) f)))]
     (when (seq data)
-      (db-delete coll)
-      (db-insert coll data))))
+      (db-insert (coll-tmp coll) data)
+      (db-rename coll (coll-tmp (coll-tmp coll)))
+      (db-rename (coll-tmp coll) coll)
+      (db-drop (coll-tmp (coll-tmp coll))))))
 
 ;; Stats
 
