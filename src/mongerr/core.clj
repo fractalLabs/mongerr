@@ -158,18 +158,18 @@
 
 (defn db-rename
   [old-collection new-collection]
-  (mc/rename *db* old-collection new-collection))
+  (mc/rename *db* (name old-collection) (name new-collection)))
 
-(defn coll-tmp [coll] (str (name coll) "-tmp"))
+(defn coll-tmp [coll] (keyword (str (name coll) "-tmp")))
 
 (defn data-snapshot
-  [coll f]
-  (let [data (doall (remove-nils (if (fn? f) (f) f)))]
+  [coll o]
+  (let [data (doall (remove-nils (if (fn? o) (o) o)))]
     (when (seq data)
       (db-insert (coll-tmp coll) data)
-      (db-rename coll (coll-tmp (coll-tmp coll)))
+      (try (db-rename coll (coll-tmp (coll-tmp coll))) (catch Exception e))
       (db-rename (coll-tmp coll) coll)
-      (db-drop (coll-tmp (coll-tmp coll))))))
+      (try (db-drop (coll-tmp (coll-tmp coll))) (catch Exception e)))))
 
 ;; Stats
 
