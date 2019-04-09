@@ -161,15 +161,19 @@
   (mc/rename *db* (name old-collection) (name new-collection)))
 
 (defn coll-tmp [coll] (keyword (str (name coll) "-tmp")))
+(defn coll-tmp-rand [] (str "tmp-" (rand)))
 
 (defn data-snapshot
   [coll o]
-  (let [data (doall (remove-nils (if (fn? o) (o) o)))]
+  (let [data (doall (remove-nils (if (fn? o) (o) o)))
+        tmp1 (coll-tmp-rand)
+        tmp2 (coll-tmp-rand)]
     (when (seq data)
-      (db-insert (coll-tmp coll) data)
-      (try (db-rename coll (coll-tmp (coll-tmp coll))) (catch Exception e))
-      (db-rename (coll-tmp coll) coll)
-      (try (db-drop (coll-tmp (coll-tmp coll))) (catch Exception e)))))
+      (db-insert tmp1 data)
+      (if (not (empty? (db coll)))
+        (db-rename coll tmp2))
+      (db-rename tmp1 coll)
+      (db-drop tmp2))))
 
 ;; Stats
 
