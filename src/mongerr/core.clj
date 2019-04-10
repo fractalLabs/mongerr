@@ -77,7 +77,7 @@
   (try
     (mg/command *db*
                 (array-map :insert collection
-                           :documents (map #(assoc % :date-insert (java.util.Date.)) elements)
+                           :documents elements ;:documents (map #(assoc % :date-insert (java.util.Date.)) elements)
                            :ordered false))
     (catch Exception e (if (seq? elements) (doall (map #(db-insert- collection %)
                                                       elements))))))
